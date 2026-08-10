@@ -45,7 +45,7 @@ export class Game {
     container.appendChild(this.renderer.domElement);
 
     this.controls = new PointerLockControls(this.camera, this.renderer.domElement);
-    this.scene.add(this.controls.getObject());
+    this.scene.add(this.camera);
 
     this.raycaster = new THREE.Raycaster();
     this.clock = new THREE.Clock();
@@ -178,7 +178,7 @@ export class Game {
   }
 
   #updateFridges(dt) {
-    const playerPos = this.controls.getObject().position;
+    const playerPos = this.camera.position;
     for (const f of this.fridges) {
       const dir = playerPos.clone().sub(f.position);
       dir.y = 0;
@@ -210,7 +210,7 @@ export class Game {
   respawn() {
     this.health = 100;
     this.dead = false;
-    this.controls.getObject().position.set((Math.random() - 0.5) * 20, 1.6, (Math.random() - 0.5) * 20);
+    this.camera.position.set((Math.random() - 0.5) * 20, 1.6, (Math.random() - 0.5) * 20);
     this.onHealthChange(this.health);
     sounds.respawn();
   }
@@ -316,7 +316,7 @@ export class Game {
   }
 
   getState() {
-    const p = this.controls.getObject().position;
+    const p = this.camera.position;
     return { x: +p.x.toFixed(2), z: +p.z.toFixed(2), ry: +this.camera.rotation.y.toFixed(2) };
   }
 
@@ -352,7 +352,7 @@ export class Game {
       const right = (this.keys['KeyD'] ? 1 : 0) - (this.keys['KeyA'] ? 1 : 0);
       this.controls.moveForward(forward * speed * dt);
       this.controls.moveRight(right * speed * dt);
-      const p = this.controls.getObject().position;
+      const p = this.camera.position;
       p.x = THREE.MathUtils.clamp(p.x, -ARENA + 2, ARENA - 2);
       p.z = THREE.MathUtils.clamp(p.z, -ARENA + 2, ARENA - 2);
       p.y = 1.6;
