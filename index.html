@@ -3,203 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fridge FPS - Food vs Refrigerators</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0f; color: #eee; overflow: hidden; }
-    #game-canvas { display: block; width: 100vw; height: 100vh; }
-    
-    /* UI Overlays */
-    .overlay {
-      position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0f 70%);
-      z-index: 100; transition: opacity 0.3s;
-    }
-    .overlay.hidden { opacity: 0; pointer-events: none; }
-    
-    h1 { font-size: 3.5rem; margin-bottom: 0.5rem; background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb);
-         -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 30px rgba(255,107,107,0.3); }
-    .subtitle { color: #aaa; margin-bottom: 2rem; font-size: 1.1rem; }
-    
-    .menu-btn {
-      background: linear-gradient(135deg, #2d3436, #636e72);
-      border: 2px solid #feca57; color: #feca57; padding: 14px 40px; margin: 8px;
-      font-size: 1.1rem; border-radius: 8px; cursor: pointer; min-width: 260px;
-      transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
-    }
-    .menu-btn:hover { background: #feca57; color: #1a1a2e; transform: scale(1.05); box-shadow: 0 0 20px rgba(254,202,87,0.4); }
-    .menu-btn.secondary { border-color: #48dbfb; color: #48dbfb; }
-    .menu-btn.secondary:hover { background: #48dbfb; color: #1a1a2e; }
-    
-    /* Auth / forms */
-    .form-box { background: rgba(30,30,50,0.9); padding: 2rem; border-radius: 12px; border: 1px solid #444; max-width: 400px; width: 90%; }
-    input, select {
-      width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #555;
-      background: #1a1a2e; color: #eee; font-size: 1rem;
-    }
-    label { display: block; margin-top: 10px; color: #bbb; font-size: 0.9rem; }
-    
-    /* HUD */
-    #hud { position: fixed; top: 0; left: 0; right: 0; pointer-events: none; z-index: 50; display: none; }
-    #hud.visible { display: block; }
-    .hud-top { display: flex; justify-content: space-between; padding: 12px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
-    .stat { background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 6px; border: 1px solid #333; margin: 0 4px; }
-    .health-bar { width: 200px; height: 18px; background: #333; border-radius: 9px; overflow: hidden; border: 1px solid #555; }
-    .health-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ee5a24); transition: width 0.2s; }
-    #crosshair { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 20px; height: 20px; pointer-events: none; z-index: 40; display: none; }
-    #crosshair::before, #crosshair::after { content: ''; position: absolute; background: #feca57; }
-    #crosshair::before { width: 2px; height: 100%; left: 9px; }
-    #crosshair::after { height: 2px; width: 100%; top: 9px; }
-    
-    /* Chat */
-    #chat-panel {
-      position: fixed; bottom: 20px; left: 20px; width: 360px; max-height: 280px;
-      background: rgba(10,10,20,0.85); border: 1px solid #444; border-radius: 10px;
-      display: none; flex-direction: column; z-index: 60; pointer-events: auto;
-    }
-    #chat-panel.visible { display: flex; }
-    #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.85rem; max-height: 200px; }
-    .chat-msg { margin: 4px 0; word-break: break-word; }
-    .chat-msg .user { color: #48dbfb; font-weight: 600; }
-    #chat-input-row { display: flex; border-top: 1px solid #333; }
-    #chat-input { flex: 1; background: transparent; border: none; color: #eee; padding: 10px; outline: none; }
-    #chat-send { background: #feca57; border: none; color: #111; padding: 0 14px; cursor: pointer; font-weight: 600; }
-    
-    /* Leaderboard / Servers panels */
-    .panel {
-      background: rgba(20,20,35,0.95); border: 1px solid #555; border-radius: 12px;
-      padding: 1.5rem; max-width: 500px; width: 90%; max-height: 70vh; overflow-y: auto;
-    }
-    .panel h2 { margin-bottom: 1rem; color: #feca57; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #333; }
-    th { color: #aaa; font-weight: 500; }
-    .server-row { cursor: pointer; transition: background 0.15s; }
-    .server-row:hover { background: rgba(254,202,87,0.15); }
-    
-    /* In-game menu */
-    #pause-menu { z-index: 80; }
-    
-    .loading { color: #48dbfb; animation: pulse 1.2s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-    
-    #config-warning {
-      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-      background: #c0392b; color: white; padding: 10px 20px; border-radius: 8px;
-      z-index: 200; display: none; font-size: 0.9rem; max-width: 90%; text-align: center;
-    }
-  </style>
+  <title>Fridge Frenzy — Food FPS</title>
+  <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
-  <div id="config-warning">⚠️ Set your Supabase URL and Anon Key in the code (search for SUPABASE_URL) before playing online features.</div>
-  
-  <canvas id="game-canvas"></canvas>
-  <div id="crosshair"></div>
-  
-  <!-- Main Menu -->
-  <div id="main-menu" class="overlay">
-    <h1>FRIDGE FPS</h1>
-    <p class="subtitle">Players & Guns are Food • Enemies are Refrigerators</p>
-    <div id="auth-section">
-      <div class="form-box">
-        <label>Display Name</label>
-        <input type="text" id="player-name" placeholder="HungryHero" maxlength="20" value="Foodie" />
-        <button class="menu-btn" id="btn-play-guest" style="margin-top:16px;width:100%">Play as Guest</button>
-        <p style="text-align:center;margin:12px 0;color:#666;font-size:0.85rem">or sign in for cloud saves & leaderboard</p>
-        <label>Email</label>
-        <input type="email" id="auth-email" placeholder="you@food.com" />
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="••••••••" />
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="menu-btn secondary" id="btn-login" style="flex:1;min-width:0;padding:12px">Login</button>
-          <button class="menu-btn secondary" id="btn-signup" style="flex:1;min-width:0;padding:12px">Sign Up</button>
+  <div id="app">
+    <!-- Main Menu -->
+    <div id="menu" class="overlay">
+      <h1>🥕 FRIDGE FRENZY 🧊</h1>
+      <p class="subtitle">Food vs. Refrigerators — Online Multiplayer FPS</p>
+      <div class="menu-box">
+        <label>Player Name
+          <input id="playerName" maxlength="16" placeholder="e.g. AngryCarrot" />
+        </label>
+        <label>Your Food
+          <select id="playerFood">
+            <option value="carrot">🥕 Carrot</option>
+            <option value="banana">🍌 Banana</option>
+            <option value="broccoli">🥦 Broccoli</option>
+            <option value="tomato">🍅 Tomato</option>
+            <option value="cheese">🧀 Cheese</option>
+          </select>
+        </label>
+        <h3>Join a Server</h3>
+        <div id="serverList" class="server-list"><em>Loading servers…</em></div>
+        <div class="row">
+          <input id="newServerName" maxlength="24" placeholder="New server name" />
+          <button id="createServerBtn">Create Server</button>
         </div>
+        <button id="leaderboardBtn" class="secondary">🏆 Leaderboard</button>
+        <p id="menuStatus" class="status"></p>
       </div>
+      <p class="hint">WASD move · Mouse look · Hold Left-Click to fire rifle · 1 rifle / 2 knife (or Q to swap) · Enter to chat</p>
     </div>
-    <div id="menu-buttons" style="display:none">
-      <button class="menu-btn" id="btn-join-server">Join / Create Server</button>
-      <button class="menu-btn secondary" id="btn-leaderboard">Leaderboard</button>
-      <button class="menu-btn secondary" id="btn-profile">My Profile & Saves</button>
-      <button class="menu-btn secondary" id="btn-logout">Logout</button>
-    </div>
-  </div>
-  
-  <!-- Server Browser -->
-  <div id="server-browser" class="overlay hidden">
-    <div class="panel">
-      <h2>Servers</h2>
-      <p style="color:#aaa;margin-bottom:12px;font-size:0.9rem">Join an existing room or create a new one. Max ~8 players recommended on free Supabase.</p>
-      <button class="menu-btn" id="btn-create-server" style="width:100%;margin-bottom:16px">+ Create New Server</button>
-      <div id="server-list"><p class="loading">Loading servers...</p></div>
-      <button class="menu-btn secondary" id="btn-back-servers" style="width:100%;margin-top:16px">Back</button>
-    </div>
-  </div>
-  
-  <!-- Leaderboard -->
-  <div id="leaderboard-view" class="overlay hidden">
-    <div class="panel">
-      <h2>Online Leaderboard</h2>
-      <table>
-        <thead><tr><th>#</th><th>Player</th><th>Score</th><th>Kills</th></tr></thead>
-        <tbody id="lb-body"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
-      </table>
-      <button class="menu-btn secondary" id="btn-back-lb" style="width:100%;margin-top:16px">Back</button>
-    </div>
-  </div>
-  
-  <!-- Profile / Saves -->
-  <div id="profile-view" class="overlay hidden">
-    <div class="panel">
-      <h2>Player Profile & Cloud Save</h2>
-      <div id="profile-content"><p class="loading">Loading save data...</p></div>
-      <button class="menu-btn secondary" id="btn-back-profile" style="width:100%;margin-top:16px">Back</button>
-    </div>
-  </div>
-  
-  <!-- Pause / In-game menu -->
-  <div id="pause-menu" class="overlay hidden">
-    <h1 style="font-size:2rem">Paused</h1>
-    <button class="menu-btn" id="btn-resume">Resume</button>
-    <button class="menu-btn secondary" id="btn-leave-server">Leave Server</button>
-  </div>
-  
-  <!-- HUD -->
-  <div id="hud">
-    <div class="hud-top">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="health-bar"><div class="health-fill" id="health-fill" style="width:100%"></div></div>
-        <span class="stat" id="health-text">100 HP</span>
-      </div>
-      <div>
-        <span class="stat" id="score-text">Score: 0</span>
-        <span class="stat" id="kills-text">Kills: 0</span>
-        <span class="stat" id="ammo-text">Ammo: ∞</span>
-      </div>
-      <div>
-        <span class="stat" id="players-online">Players: 1</span>
-        <span class="stat" id="server-name">Room: —</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Chat -->
-  <div id="chat-panel">
-    <div id="chat-messages"></div>
-    <div id="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Type message... (Enter to send)" maxlength="200" />
-      <button id="chat-send">Send</button>
-    </div>
-  </div>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm"
-    }
-  }
-  </script>
-  <script type="module" src="./src/main.js"></script>
+    <!-- Leaderboard -->
+    <div id="leaderboard" class="overlay hidden">
+      <h2>🏆 Global Leaderboard</h2>
+      <table id="leaderboardTable">
+        <thead><tr><th>#</th><th>Player</th><th>Fridges Destroyed</th><th>Best Score</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button id="closeLeaderboardBtn">Back to Menu</button>
+    </div>
+
+    <!-- In-game HUD -->
+    <div id="hud" class="hidden">
+      <div id="crosshair">+</div>
+      <div id="stats">
+        <span id="health">❤️ 100</span>
+        <span id="score">Score: 0</span>
+        <span id="kills">🧊 Fridges: 0</span>
+        <span id="weapon">🔫 Baguette Rifle</span>
+      </div>
+      <div id="players-online"></div>
+      <div id="chat">
+        <div id="chatMessages"></div>
+        <input id="chatInput" maxlength="200" placeholder="Press Enter to chat…" class="hidden" />
+      </div>
+      <div id="deathScreen" class="hidden">
+        <h2>You got refrigerated! 🧊</h2>
+        <p>Respawning…</p>
+      </div>
+      <button id="quitBtn">Quit to Menu</button>
+    </div>
+
+    <div id="clickToPlay" class="overlay hidden">
+      <h2>Click to lock mouse &amp; play</h2>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
