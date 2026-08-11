@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Chat - ArticleHub</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="index.html">ArticleHub</a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="publish.html">Publish</a>
+      <a href="chat.html">Chat</a>
+      <span id="userBadge" class="user-badge"></span>
+      <a href="auth.html" id="authLink">Log in</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm hidden">Log out</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="page-head">
+      <h1>Global Chat</h1>
+      <span class="muted">Talk with readers from anywhere.</span>
+    </div>
+
+    <div class="card chat-card">
+      <div id="messages" class="chat-messages">
+        <p class="muted">Loading messages...</p>
+      </div>
+      <form id="chatForm" class="chat-form">
+        <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off" maxlength="1000" />
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+  </main>
+
+  <script src="lib/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>

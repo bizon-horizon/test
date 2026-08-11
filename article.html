@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Article - ArticleHub</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="index.html">ArticleHub</a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="publish.html">Publish</a>
+      <a href="chat.html">Chat</a>
+      <span id="userBadge" class="user-badge"></span>
+      <a href="auth.html" id="authLink">Log in</a>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm hidden">Log out</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div id="articleView"></div>
+
+    <section class="card comments-section">
+      <h2>Comments (<span id="commentCount">0</span>)</h2>
+      <div id="commentFormWrap"></div>
+      <div id="comments">
+        <p class="muted">Loading comments...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="lib/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="article-page.js"></script>
+</body>
+</html>
